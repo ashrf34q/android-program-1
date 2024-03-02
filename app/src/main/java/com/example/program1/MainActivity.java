@@ -131,6 +131,8 @@ public class MainActivity extends AppCompatActivity {
             userInput.setError("Provide an answer!");
         }
         else {
+            userInput.setEnabled(false);
+            checkButton.setEnabled(false);
 //            Now we can check the answer
             userInput.setEnabled(false);
             switch (questionType) {
@@ -198,6 +200,8 @@ public class MainActivity extends AppCompatActivity {
                     break;
 
             }
+            problem.setText("");
+            userInput.setText("");
 
         }
 
