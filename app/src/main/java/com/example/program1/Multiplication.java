@@ -6,7 +6,7 @@ public class Multiplication {
 
     public Multiplication() {
         this.questions = new String[]{"9 x 26 = ", "5 x 104 = ", "1 x 11 = ", "91 x 5 = ", "8 x 59 = "};
-        this.correctAnswers = new int[]{234, 520, 1, 455, 472};
+        this.correctAnswers = new int[]{234, 520, 11, 455, 472};
     }
 
     public String getQuestionById(int id) {

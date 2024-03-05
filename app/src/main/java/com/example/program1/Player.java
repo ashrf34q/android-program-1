@@ -1,17 +1,17 @@
 package com.example.program1;
 
+
+enum Reward {SINGLE, DOUBLE, JACKPOT};
+
 public class Player {
     private int total;
 
-    private int jackpot;
-    private enum Type {ADDITION, SUBTRACTION, MULTIPLICATION};
-    private enum Reward {SINGLE, DOUBLE, JACKPOT};
+    private final MainActivity mainActivity = new MainActivity();
 
     public Player() {
         this.total = 0;
-        this.jackpot = 5;
+        this.reward = Reward.SINGLE;
     }
-
     private Reward reward;
 
     public Reward getReward() {
@@ -33,7 +33,7 @@ public class Player {
     public boolean checkAddition(int userAnswer, int problemId, Addition addition, int currentJackpot) {
         if(userAnswer == addition.getCorrectAnswer(problemId)){
             if(this.reward == Reward.DOUBLE) this.total += 2;
-            else if(this.reward == Reward.JACKPOT) this.total += currentJackpot;
+            else if(this.reward == Reward.JACKPOT) { this.total += currentJackpot; mainActivity.resetJackpot();}
             else this.total += 1;
 
             return true;
@@ -48,7 +48,7 @@ public class Player {
     public boolean checkSubtraction(int userAnswer, int problemId, Subtraction subtraction, int currentJackpot) {
         if(userAnswer == subtraction.getCorrectAnswer(problemId)){
             if(this.reward == Reward.DOUBLE) this.total += 4;
-            else if(this.reward == Reward.JACKPOT) this.total += currentJackpot;
+            else if(this.reward == Reward.JACKPOT) { this.total += currentJackpot; mainActivity.resetJackpot(); }
             else this.total += 2;
 
             return true;
@@ -63,7 +63,7 @@ public class Player {
     public boolean checkMultiplication(int userAnswer, int problemId, Multiplication multiplication, int currentJackpot) {
         if(userAnswer == multiplication.getCorrectAnswerById(problemId)){
             if(this.reward == Reward.DOUBLE) this.total += 6;
-            else if(this.reward == Reward.JACKPOT) this.total += currentJackpot;
+            else if(this.reward == Reward.JACKPOT) { this.total += currentJackpot; mainActivity.resetJackpot(); }
             else this.total += 3;
 
             return true;

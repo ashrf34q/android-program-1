@@ -2,7 +2,9 @@ package com.example.program1;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -13,7 +15,6 @@ import android.widget.Toast;
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
-
     TextView p1_Total;
     TextView p2_Total;
     TextView currentPlayerView;
@@ -25,27 +26,29 @@ public class MainActivity extends AppCompatActivity {
 
 
     // ****** State variables *****
-    Player player1;
+    private Player player1;
     Player player2;
-    enum CurrPlayer {P1, P2};
-    enum RewardOptions {SINGLE, DOUBLE, JACKPOT};
-    enum QuestionType {ADDITION, SUBTRACTION, MULTIPLICATION};
+    enum CurrPlayer {P1, P2}
+    enum QuestionType {ADDITION, SUBTRACTION, MULTIPLICATION, NONE}
     CurrPlayer currentPlayer;
     QuestionType questionType;
-    RewardOptions rewardOptions;
-//    HelperClass helperClass;
     int problemId;
     int currentJackpot;
+    //   **********************
 
-    //   ******************
+    public void resetJackpot() {
+        this.currentJackpot = 5;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        problemId = -1;
         player1 = new Player();
         player2 = new Player();
+        questionType = QuestionType.NONE;
         currentPlayer = CurrPlayer.P1;
         currentJackpot = 5;
         problem = findViewById(R.id.problem);
@@ -55,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
         p1_Total = findViewById(R.id.p1_total);
         p2_Total = findViewById(R.id.p2_total);
         userInput = findViewById(R.id.userInput);
+        checkButton = findViewById(R.id.checkButton);
 
 //        On start of the activity, the user can't write an answer
 //        userInput.setFocusable(false);
@@ -101,18 +105,25 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case 4: // Try again for a double reward
                 dieImage.setImageResource(R.drawable.die4);
-                rewardOptions = RewardOptions.DOUBLE;
-                Toast.makeText(this, "Try again, earn 2x points if you get it right!", Toast.LENGTH_LONG).show();
+                if(currentPlayer == CurrPlayer.P1) player1.setReward(Reward.DOUBLE);
+                else player2.setReward(Reward.DOUBLE);
+                Toast.makeText(this, "Try again, earn 2x points if you get it right!", Toast.LENGTH_SHORT).show();
                 break;
             case 5: // Lose a turn
+                Toast.makeText(this, "Lose a turn!", Toast.LENGTH_SHORT).show();
                 dieImage.setImageResource(R.drawable.die5);
-                if(currentPlayer == CurrPlayer.P1) currentPlayer = CurrPlayer.P2;
-                else currentPlayer = CurrPlayer.P1;
+                if(currentPlayer == CurrPlayer.P1) { currentPlayer = CurrPlayer.P2; currentPlayerView.setText("P2"); }
+                else { currentPlayer = CurrPlayer.P1; currentPlayerView.setText("P1"); }
+                problem.setText("");
+                userInput.setText("");
+                userInput.setEnabled(false);
+                checkButton.setEnabled(false);
                 break;
             case 6: // Try for jackpot
                 dieImage.setImageResource(R.drawable.die6);
-                rewardOptions = RewardOptions.JACKPOT;
-                Toast.makeText(this, "Try for jackpot", Toast.LENGTH_LONG).show();
+                if(currentPlayer == CurrPlayer.P1) player1.setReward(Reward.JACKPOT);
+                else player2.setReward(Reward.JACKPOT);
+                Toast.makeText(this, "Try for jackpot", Toast.LENGTH_SHORT).show();
                 break;
 
             default:
@@ -121,126 +132,131 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void checkAnswer(View view) {
-//    After implementing DOUBLE and JACKPOT, reset it to SINGLE
         Addition addition;
         Subtraction subtraction;
         Multiplication multiplication;
 
-        if(userInput.getText().toString().equals("")) {
+        if(userInput.getText().toString().equalsIgnoreCase("")) {
 //            Empty input
             userInput.setError("Provide an answer!");
         }
         else {
+            Log.w("program1", "I'm working so far!");
             userInput.setEnabled(false);
             checkButton.setEnabled(false);
 //            Now we can check the answer
-            userInput.setEnabled(false);
             switch (questionType) {
                 case ADDITION:
+                    Log.w("program1", "addition");
 //                    We know it's an addition problem, and we have the problem id. Fetch the correct answer for that problem and check answer.
                     addition = new Addition();
                     if(currentPlayer == CurrPlayer.P1) { // Player 1's turn
-                        if(!player1.checkAddition(Integer.parseInt(userInput.getText().toString()), problemId, addition, currentJackpot))
+                        if(!player1.checkAddition(Integer.parseInt(userInput.getText().toString()), problemId, addition, currentJackpot)) {
                             currentJackpot += 1; // Wrong answer
+                            Log.w("program1", "Player 1, Wrong answer");
+                        }
                         else{
                             // Player 1 answered correctly, update their total on the UI
-                            p1_Total.setText(player1.getTotal());
-                            currentPlayer = CurrPlayer.P2;
+                            p1_Total.setText(String.valueOf(player1.getTotal()));
+
+                            Log.w("program1", "Player 1, Correct answer");
                         }
+                        currentPlayer = CurrPlayer.P2;
                     }
                     else { // Player 2's turn
-                        if(!player2.checkAddition(Integer.parseInt(userInput.getText().toString()), problemId, addition, currentJackpot))
+
+                        if(!player2.checkAddition(Integer.parseInt(userInput.getText().toString()), problemId, addition, currentJackpot)) {
                             currentJackpot += 1; // Wrong answer
-                        else {
-                            p2_Total.setText(player2.getTotal());
-                            currentPlayer = CurrPlayer.P1;
+                            Log.w("program1", "Player 2, Wrong answer");
                         }
+                        else {
+                            p2_Total.setText(String.valueOf(player2.getTotal()));
+                            Log.w("program1", "Player 2, Correct answer");
+                        }
+                        currentPlayer = CurrPlayer.P1;
                     }
                     break;
                 case SUBTRACTION:
+                    Log.w("program1", "subtraction");
                     subtraction = new Subtraction();
                     if(currentPlayer == CurrPlayer.P1) {
-                        if(!player1.checkSubtraction(Integer.parseInt(userInput.getText().toString()), problemId, subtraction, currentJackpot))
+                        if(!player1.checkSubtraction(Integer.parseInt(userInput.getText().toString()), problemId, subtraction, currentJackpot)) {
                             currentJackpot += 2;
-                        else {
-                            p1_Total.setText(player1.getTotal());
-                            currentPlayer = CurrPlayer.P2;
+                            Log.w("program1", "Player 1, Wrong answer");
                         }
+                        else {
+                            p1_Total.setText(String.valueOf(player1.getTotal()));
+                            Log.w("program1", "Player 1, Correct answer");
+                        }
+                        currentPlayer = CurrPlayer.P2;
                     }
                     else {
-                        if(!player2.checkSubtraction(Integer.parseInt(userInput.getText().toString()), problemId, subtraction, currentJackpot))
+                        if(!player2.checkSubtraction(Integer.parseInt(userInput.getText().toString()), problemId, subtraction, currentJackpot)) {
                             currentJackpot += 2;
-                        else {
-                            p2_Total.setText(player2.getTotal());
-                            currentPlayer = CurrPlayer.P1;
+                            Log.w("program1", "Player 2, Wrong answer");
                         }
+                        else {
+                            p2_Total.setText(String.valueOf(player2.getTotal()));
+
+                            Log.w("program1", "Player 2, Correct answer");
+                        }
+                        currentPlayer = CurrPlayer.P1;
                     }
                     break;
                 case MULTIPLICATION:
                     multiplication = new Multiplication();
+                    Log.w("program1", "multiplication");
                     if(currentPlayer == CurrPlayer.P1) {
-                        if(!player1.checkMultiplication(Integer.parseInt(userInput.getText().toString()), problemId, multiplication, currentJackpot))
+                        if(!player1.checkMultiplication(Integer.parseInt(userInput.getText().toString()), problemId, multiplication, currentJackpot)) {
                             currentJackpot += 3;
-                        else {
-                            currentPlayer = CurrPlayer.P2;
-                            p1_Total.setText(player1.getTotal());
+                            Log.w("program1", "Player 1, Wrong answer");
                         }
+                        else {
+                            p1_Total.setText(String.valueOf(player1.getTotal()));
+                            Log.w("program1", "Player 1, Correct answer");
+                        }
+                        currentPlayer = CurrPlayer.P2;
                     }
                     else {
-                        if(!player2.checkMultiplication(Integer.parseInt(userInput.getText().toString()), problemId, multiplication, currentJackpot))
+                        if(!player2.checkMultiplication(Integer.parseInt(userInput.getText().toString()), problemId, multiplication, currentJackpot)) {
                             currentJackpot += 3;
-                        else {
-                            currentPlayer = CurrPlayer.P1;
-                            p2_Total.setText(player2.getTotal());
+                            Log.w("program1", "Player 2, Wrong answer");
                         }
+                        else {
+
+                            p2_Total.setText(String.valueOf(player2.getTotal()));
+                            Log.w("program1", "Player 2, Correct answer");
+                        }
+                        currentPlayer = CurrPlayer.P1;
                     }
                     break;
 
                 default:
+                    Log.w("program1", "Default branch!");
                     break;
 
             }
+
+//            Check if any user has won yet
+            if(player1.getTotal() >= 20) {
+                Intent intent = new Intent(getApplicationContext(), WinActivity.class);
+                intent.putExtra("message_key", "Player 1 wins!");
+                startActivity(intent);
+            }
+            if(player2.getTotal() >= 20) {
+                Intent intent = new Intent(getApplicationContext(), WinActivity.class);
+                intent.putExtra("message_key", "Player 2 wins!");
+                startActivity(intent);
+            }
+
+//            ******************************
+
+            if(currentPlayer == CurrPlayer.P1) currentPlayerView.setText("P1");
+            else currentPlayerView.setText("P2");
+            jackpot.setText(String.valueOf(currentJackpot));
             problem.setText("");
             userInput.setText("");
-
+            dieImage.setImageResource(R.drawable.die_random);
         }
-
-
     }
 }
-
-/*
-class HelperClass {
-    private int p1Total, p2Total, jackPot;
-
-    public HelperClass() {
-        this.p1Total = 0;
-        this.p2Total = 0;
-        this.jackPot = 5;
-    }
-
-    public int getP1Total() {
-        return p1Total;
-    }
-
-    public void setP1Total(int p1Total) {
-        this.p1Total += p1Total;
-    }
-
-    public int getP2Total() {
-        return p2Total;
-    }
-
-    public void setP2Total(int p2Total) {
-        this.p2Total += p2Total;
-    }
-
-    public int getJackPot() {
-        return jackPot;
-    }
-
-    public void setJackPot(int jackPot) {
-        this.jackPot = jackPot;
-    }
-}
- */
